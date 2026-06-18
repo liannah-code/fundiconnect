@@ -1,7 +1,6 @@
 /* ── FundiConnect Global Styles ── */
 :root {
   --orange: #E8621A;
-  --orange-dark: #C0501400;
   --orange-hover: #d05618;
   --orange-light: #FEF3EC;
   --orange-mid: #f5a96b;
@@ -43,12 +42,10 @@ a { color: inherit; text-decoration: none; }
 button { font-family: var(--font-sans); cursor: pointer; }
 input, select, textarea { font-family: var(--font-sans); }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--gray-100); }
 ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
 
-/* Animations */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -62,16 +59,11 @@ input, select, textarea { font-family: var(--font-sans); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
-}
 
 .animate-fadeUp  { animation: fadeUp 0.4s ease both; }
 .animate-fadeIn  { animation: fadeIn 0.3s ease both; }
 .animate-slideDown { animation: slideDown 0.25s ease both; }
 
-/* Staggered children */
 .stagger > *:nth-child(1) { animation-delay: 0.05s; }
 .stagger > *:nth-child(2) { animation-delay: 0.10s; }
 .stagger > *:nth-child(3) { animation-delay: 0.15s; }
@@ -79,7 +71,6 @@ input, select, textarea { font-family: var(--font-sans); }
 .stagger > *:nth-child(5) { animation-delay: 0.25s; }
 .stagger > *:nth-child(6) { animation-delay: 0.30s; }
 
-/* Utility */
 .sr-only {
   position: absolute; width: 1px; height: 1px;
   padding: 0; margin: -1px; overflow: hidden;

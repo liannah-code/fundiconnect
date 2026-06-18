@@ -39,8 +39,7 @@ export default function Register() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    const result = register({ ...form, role });
+    const result = await register({ ...form, role });
     setLoading(false);
     if (result.error) { toast(result.error, 'error'); return; }
     toast(`Welcome to FundiConnect, ${form.name.split(' ')[0]}!`);

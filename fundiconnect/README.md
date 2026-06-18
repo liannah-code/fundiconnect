@@ -1,33 +1,57 @@
 # FundiConnect
 
-A community marketplace connecting local fundis (tradespeople) with customers across Nairobi.
+A community marketplace connecting local fundis (tradespeople) with customers across Nairobi — now powered by **Supabase** for real authentication and a live database.
 
 ## Tech Stack
-- **React 18** with React Router v6
-- **localStorage** for data persistence (replace with Supabase for production)
+- **React 18** + **Vite**
+- **React Router v6**
+- **Supabase** — Auth, Postgres database, Row Level Security
 - **lucide-react** for icons
 - **Plus Jakarta Sans** + **DM Serif Display** fonts (Google Fonts)
 
 ---
 
-## Getting Started (Local Development)
+## 1. Set up Supabase
 
-### Prerequisites
-- Node.js 16+ installed ([nodejs.org](https://nodejs.org))
-- npm or yarn
+If you haven't already, follow the step-by-step guide to:
+1. Create a Supabase project
+2. Run the SQL to create `profiles`, `bookings`, and `reviews` tables
+3. Enable Row Level Security + policies
+4. Enable email auth (and turn off "Confirm email" for easier local testing)
+5. Grab your **Project URL** and **anon public key** from Project Settings → API
 
-### 1. Install dependencies
+### Seed demo fundis (optional)
+Run `supabase/seed_demo_fundis.sql` in the SQL Editor to populate the Browse page with 8 sample fundis. These are read-only demo profiles — they don't have real login accounts, so don't worry about deleting them later if needed.
+
+---
+
+## 2. Configure environment variables
+
+Copy `.env.example` to `.env` in the project root:
+
 ```bash
-cd fundiconnect
-npm install
+cp .env.example .env
 ```
 
-### 2. Start the development server
+Then fill in your values:
+
+```
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key-here
+```
+
+**Never commit `.env` to git** — it's already in `.gitignore`.
+
+---
+
+## 3. Install & run
+
 ```bash
+npm install
 npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
@@ -36,159 +60,82 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 src/
 ├── components/
-│   ├── Navbar.jsx          # Top navigation bar
-│   ├── ProtectedRoute.jsx  # Auth guard for private routes
-│   └── UI.jsx              # Shared UI components (Button, Input, Card, etc.)
+│   ├── Navbar.jsx
+│   ├── ProtectedRoute.jsx   # redirects to /login if not signed in, shows loader during session check
+│   └── UI.jsx
 ├── context/
-│   ├── AuthContext.jsx     # User auth state (register, login, logout)
-│   └── BookingsContext.jsx # Booking state (create, update, review)
+│   ├── AuthContext.jsx      # wraps Supabase Auth + profiles table
+│   └── BookingsContext.jsx  # wraps bookings + reviews tables
 ├── data/
-│   └── seed.js             # Demo fundi data
+│   └── fundis.js            # fetches fundi profiles from Supabase
+├── lib/
+│   └── supabase.js          # Supabase client instance
 ├── pages/
-│   ├── Home.jsx            # Landing page
-│   ├── Browse.jsx          # Search & book fundis
-│   ├── Register.jsx        # Sign up (customer or fundi)
-│   ├── Login.jsx           # Log in
-│   ├── FundiDashboard.jsx  # Fundi's job management
-│   └── MyBookings.jsx      # Customer's booking history + reviews
-├── App.jsx                 # Routes
-├── index.css               # Global styles & design tokens
-└── index.js                # Entry point
+│   ├── Home.jsx
+│   ├── Browse.jsx
+│   ├── Register.jsx
+│   ├── Login.jsx
+│   ├── FundiDashboard.jsx
+│   └── MyBookings.jsx
+├── App.jsx
+├── index.css
+└── index.jsx
+supabase/
+└── seed_demo_fundis.sql     # optional demo data
 ```
 
 ---
 
-## Features
+## How Auth Works
 
-### For Customers
-- Browse and search fundis by trade, location, and keyword
-- View fundi profiles with ratings, reviews, and rates
-- Send booking requests with job description and preferred time
-- Track booking status (pending → accepted → completed)
-- Leave star ratings and written reviews after job completion
+1. `register()` calls `supabase.auth.signUp()`, then inserts a row into `profiles` with the same `id` as the auth user.
+2. `login()` calls `supabase.auth.signInWithPassword()`, then loads the matching `profiles` row.
+3. `AuthContext` listens for `onAuthStateChange` so sessions persist across page reloads automatically (Supabase stores the session in browser storage).
+4. `ProtectedRoute` shows a loader while the session is being checked, then redirects to `/login` if there's no user, or `/` if the role doesn't match the route.
 
-### For Fundis
-- Register with trade, location, rate, and bio
-- Dashboard with stats (jobs done, pending requests, rating, rate)
-- Accept or decline incoming booking requests
-- Mark jobs as completed
-- Toggle availability status (Available / Busy)
-- View all customer reviews
+---
+
+## How Bookings & Reviews Work
+
+- **Customers** create a booking via `createBooking()` → inserted into `bookings` with `status: 'pending'`.
+- **Fundis** see pending requests on their dashboard and can `Accept`, `Decline`, or later `Mark complete` via `updateStatus()`.
+- When a booking is marked `completed`, the fundi's `jobs_done` count increments automatically.
+- **Customers** can leave a review on completed bookings via `addReview()`, which inserts into `reviews` and recalculates the fundi's average `rating`.
+
+---
+
+## Row Level Security Summary
+
+| Table | Who can SELECT | Who can INSERT | Who can UPDATE |
+|---|---|---|---|
+| `profiles` | Everyone | Self only | Self only |
+| `bookings` | The fundi or customer on the booking | Customer (as `customer_id`) | The fundi (status changes) |
+| `reviews` | Everyone | The customer who owns the related booking | — |
 
 ---
 
 ## Deploying to Production
 
-### Option 1: Vercel (Recommended — free)
+### Vercel (recommended)
 ```bash
 npm install -g vercel
 vercel
 ```
-Follow the prompts. Your site will be live at `your-app.vercel.app`.
+Add your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as Environment Variables in the Vercel project settings (Settings → Environment Variables) — they won't be picked up from `.env` automatically in production.
 
-### Option 2: Netlify
+After deploying, go back to Supabase **Authentication → URL Configuration** and update the **Site URL** to your live Vercel URL.
+
+### Netlify
 ```bash
 npm run build
 ```
-Then drag the `build/` folder to [netlify.com/drop](https://app.netlify.com/drop).
-
-### Option 3: Custom domain
-1. Buy `fundiconnect.co.ke` at [kenic.or.ke](https://www.kenic.or.ke) or Namecheap
-2. Deploy to Vercel/Netlify
-3. Add the custom domain in your hosting dashboard
+Drag the `dist/` folder to [netlify.com/drop](https://app.netlify.com/drop), and add the same environment variables in Site settings → Environment variables.
 
 ---
 
-## Upgrading to a Real Backend (Supabase)
+## Next Steps
 
-The app currently uses localStorage for all data. To upgrade to a real database:
-
-### 1. Create a Supabase project at [supabase.com](https://supabase.com) (free tier)
-
-### 2. Install the client
-```bash
-npm install @supabase/supabase-js
-```
-
-### 3. Create these tables in Supabase
-
-```sql
--- Users (handled by Supabase Auth)
--- Extend with a profiles table:
-create table profiles (
-  id uuid references auth.users primary key,
-  name text,
-  phone text,
-  role text check (role in ('fundi', 'customer')),
-  trade text,
-  location text,
-  rate integer,
-  bio text,
-  available boolean default true,
-  created_at timestamptz default now()
-);
-
-create table bookings (
-  id uuid primary key default gen_random_uuid(),
-  fundi_id uuid references profiles(id),
-  customer_id uuid references profiles(id),
-  description text,
-  date timestamptz,
-  status text default 'pending' check (status in ('pending','accepted','completed','declined')),
-  created_at timestamptz default now()
-);
-
-create table reviews (
-  id uuid primary key default gen_random_uuid(),
-  booking_id uuid references bookings(id),
-  fundi_id uuid references profiles(id),
-  rating integer check (rating between 1 and 5),
-  comment text,
-  reviewer_name text,
-  created_at timestamptz default now()
-);
-```
-
-### 4. Replace AuthContext and BookingsContext
-Swap localStorage calls with `supabase.auth.signUp()`, `supabase.from('bookings').insert()`, etc.
-
----
-
-## Adding M-Pesa Payments
-
-To accept M-Pesa deposits for bookings:
-
-1. Sign up at [Safaricom Developer Portal](https://developer.safaricom.co.ke)
-2. Use the **M-Pesa STK Push API** (Lipa Na M-Pesa Online)
-3. Create a backend endpoint (Node.js/Express or Supabase Edge Function) to trigger the STK push
-4. Add a "Pay deposit" button on the booking confirmation screen
-
----
-
-## SMS Notifications (Africa's Talking)
-
-To notify fundis of new bookings via SMS:
-1. Sign up at [africastalking.com](https://africastalking.com)
-2. Use their SMS API in a Supabase Edge Function triggered by a new booking insert
-3. Send: "New booking from [Customer] for [Job] on [Date]. Log in to respond."
-
----
-
-## Environment Variables
-
-Create a `.env` file in the root:
-```
-REACT_APP_SUPABASE_URL=your_supabase_url
-REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-REACT_APP_AT_API_KEY=your_africas_talking_key
-```
-
----
-
-## Demo Accounts
-
-Log in with these pre-seeded accounts (password: `demo`):
-- `james@demo.com` — James Mwangi (Electrician, Westlands)
-- `fatuma@demo.com` — Fatuma Hassan (Plumber, Kibera)
-
-Or register a new account from the sign-up page.
+- **M-Pesa payments**: Add Lipa Na M-Pesa STK Push via a Supabase Edge Function for booking deposits
+- **SMS notifications**: Use Africa's Talking in an Edge Function triggered by new rows in `bookings`
+- **Profile photos**: Use Supabase Storage to let fundis upload a profile picture
+- **Email confirmation**: Re-enable "Confirm email" in Supabase Auth before going live

@@ -22,7 +22,6 @@ export default function Home() {
   const navigate = useNavigate();
   return (
     <div>
-      {/* Hero */}
       <section style={{ background: 'linear-gradient(135deg, #fff8f3 0%, #edfaf3 100%)', padding: '72px 20px 80px', textAlign: 'center' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }} className="animate-fadeUp">
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--orange-light)', border: '1px solid var(--orange-mid)', borderRadius: 20, padding: '5px 14px', fontSize: 13, fontWeight: 600, color: 'var(--orange)', marginBottom: 24 }}>
@@ -49,7 +48,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trades */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 20px' }}>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, textAlign: 'center', marginBottom: 8 }}>Browse by trade</h2>
         <p style={{ textAlign: 'center', color: 'var(--gray-400)', marginBottom: 40 }}>Whatever the job, we have the right person for it.</p>
@@ -68,7 +66,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
       <section style={{ background: 'var(--gray-50)', padding: '64px 20px', borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, textAlign: 'center', marginBottom: 8 }}>How it works</h2>
@@ -85,7 +82,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <section style={{ background: 'var(--gray-800)', padding: '64px 20px', textAlign: 'center' }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, color: '#fff', marginBottom: 14 }}>Are you a fundi?</h2>

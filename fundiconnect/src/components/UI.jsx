@@ -110,7 +110,7 @@ const COLORS = [
   ['#E6F1FB','#185FA5'], ['#EAF3DE','#3B6D11'], ['#F3E8FE','#7c3aed'],
 ];
 export function Avatar({ name = '', size = 44 }) {
-  const idx = name.charCodeAt(0) % COLORS.length;
+  const idx = (name.charCodeAt(0) || 0) % COLORS.length;
   const [bg, fg] = COLORS[idx];
   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   return (
@@ -209,6 +209,15 @@ export function StatCard({ label, value, icon: Icon, color = 'var(--orange)' }) 
         </div>
         {Icon && <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={20} color={color} /></div>}
       </div>
+    </div>
+  );
+}
+
+/* ── Full-page Loader ── */
+export function PageLoader() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 32, height: 32, border: '3px solid var(--gray-200)', borderTop: '3px solid var(--orange)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
     </div>
   );
 }

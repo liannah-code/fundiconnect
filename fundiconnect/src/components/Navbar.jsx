@@ -1,19 +1,16 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Avatar } from './UI';
-import { LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
-    setMenuOpen(false);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -27,13 +24,11 @@ export default function Navbar() {
       height: 'var(--nav-height)',
     }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--orange)' }}>fundi</span>
           <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--gray-800)' }}>connect</span>
         </Link>
 
-        {/* Desktop links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {!user && (
             <>
@@ -53,8 +48,8 @@ export default function Navbar() {
               {user.role === 'fundi' && <NavLink to="/dashboard" active={isActive('/dashboard')}>My Dashboard</NavLink>}
               {user.role === 'customer' && <NavLink to="/my-bookings" active={isActive('/my-bookings')}>My Bookings</NavLink>}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 8, paddingLeft: 12, borderLeft: '1px solid var(--gray-200)' }}>
-                <Avatar name={user.name} size={32} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--gray-800)' }}>{user.name.split(' ')[0]}</span>
+                <Avatar name={user.name || user.email || '?'} size={32} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--gray-800)' }}>{(user.name || user.email || '').split(' ')[0]}</span>
                 <button onClick={handleLogout} title="Log out"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 6 }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--orange)'}

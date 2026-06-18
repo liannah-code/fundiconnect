@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useBookings } from '../context/BookingsContext';
-import { getAllFundis } from '../data/seed';
-import { Card, Avatar, Badge, Stars, Btn, Input, Select, Textarea, toast } from '../components/UI';
-import { Search, MapPin, SlidersHorizontal, X, Briefcase, Clock } from 'lucide-react';
+import { getAllFundis } from '../data/fundis';
+import { Card, Avatar, Badge, Stars, Btn, Input, Textarea, toast, PageLoader } from '../components/UI';
+import { Search, MapPin, Briefcase, X } from 'lucide-react';
 
 const TRADES = ['All','Electrician','Plumber','Painter','Carpenter','Mason','Welder','Cleaner','Tiler','Roofer'];
 const LOCATIONS = ['All areas','Westlands','Kibera','Kasarani','Langata','Embakasi','Karen','Ruaraka','Industrial Area'];
@@ -12,6 +12,7 @@ const LOCATIONS = ['All areas','Westlands','Kibera','Kasarani','Langata','Embaka
 export default function Browse() {
   const [params] = useSearchParams();
   const [fundis, setFundis] = useState([]);
+  const [loadingFundis, setLoadingFundis] = useState(true);
   const [search, setSearch] = useState('');
   const [trade, setTrade] = useState(params.get('trade') || 'All');
   const [location, setLocation] = useState('All areas');
@@ -20,24 +21,28 @@ export default function Browse() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { setFundis(getAllFundis()); }, []);
+  useEffect(() => {
+    let active = true;
+    setLoadingFundis(true);
+    getAllFundis().then(data => { if (active) { setFundis(data); setLoadingFundis(false); } });
+    return () => { active = false; };
+  }, []);
 
   const filtered = fundis
     .filter(f => {
       const q = search.toLowerCase();
-      const matchQ = !q || f.name.toLowerCase().includes(q) || f.trade.toLowerCase().includes(q) || f.bio?.toLowerCase().includes(q);
+      const matchQ = !q || f.name?.toLowerCase().includes(q) || f.trade?.toLowerCase().includes(q) || f.bio?.toLowerCase().includes(q);
       const matchT = trade === 'All' || f.trade === trade;
       const matchL = location === 'All areas' || f.location === location;
       return matchQ && matchT && matchL;
     })
-    .sort((a, b) => sortBy === 'rating' ? (b.rating || 0) - (a.rating || 0) : a.rate - b.rate);
+    .sort((a, b) => sortBy === 'rating' ? (b.rating || 0) - (a.rating || 0) : (a.rate || 0) - (b.rate || 0));
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
-      {/* Page header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, marginBottom: 6 }}>Find a fundi</h1>
-        <p style={{ color: 'var(--gray-400)', fontSize: 15 }}>{filtered.length} fundi{filtered.length !== 1 ? 's' : ''} available</p>
+        <p style={{ color: 'var(--gray-400)', fontSize: 15 }}>{loadingFundis ? 'Loading...' : `${filtered.length} fundi${filtered.length !== 1 ? 's' : ''} available`}</p>
       </div>
 
       {/* Filters */}
@@ -77,8 +82,7 @@ export default function Browse() {
         ))}
       </div>
 
-      {/* Fundi Grid */}
-      {filtered.length === 0 ? (
+      {loadingFundis ? <PageLoader /> : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--gray-400)' }}>
           <Search size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
           <p style={{ fontSize: 16, fontWeight: 500 }}>No fundis found</p>
@@ -145,9 +149,9 @@ function BookingModal({ fundi, onClose }) {
     e.preventDefault();
     if (!form.description.trim() || !form.date) { toast('Please fill in all fields', 'error'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    createBooking({ fundiId: fundi.id, fundiName: fundi.name, customerId: user?.id || 'guest', customerName: form.name, customerPhone: form.phone, description: form.description, date: form.date });
+    const result = await createBooking({ fundiId: fundi.id, fundiName: fundi.name, customerId: user?.id, customerName: form.name, customerPhone: form.phone, description: form.description, date: form.date });
     setLoading(false);
+    if (result.error) { toast(result.error, 'error'); return; }
     toast(`Booking request sent to ${fundi.name}!`);
     onClose();
   };

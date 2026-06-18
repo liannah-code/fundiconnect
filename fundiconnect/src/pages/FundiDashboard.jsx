@@ -1,28 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBookings } from '../context/BookingsContext';
-import { Avatar, Badge, Stars, StatCard, Card, Btn, toast } from '../components/UI';
+import { supabase } from '../lib/supabase';
+import { Avatar, Badge, Stars, StatCard, Card, Btn, toast, PageLoader } from '../components/UI';
 import { Briefcase, Clock, CheckCircle, DollarSign, Star, MapPin, Phone, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function FundiDashboard() {
   const { user, updateUser } = useAuth();
   const { forFundi, updateStatus } = useBookings();
   const [tab, setTab] = useState('requests');
-  const bookings = forFundi(user.id);
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [reviews, setReviews] = useState([]);
+
+  const refresh = useCallback(async () => {
+    setLoadingBookings(true);
+    const data = await forFundi(user.id);
+    setBookings(data);
+    setLoadingBookings(false);
+  }, [forFundi, user.id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  useEffect(() => {
+    supabase
+      .from('reviews')
+      .select('*')
+      .eq('fundi_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) { console.error('Error fetching reviews:', error.message); return; }
+        setReviews(data || []);
+      });
+  }, [user.id]);
 
   const pending   = bookings.filter(b => b.status === 'pending');
   const accepted  = bookings.filter(b => b.status === 'accepted');
   const completed = bookings.filter(b => b.status === 'completed');
 
-  const toggleAvailability = () => {
-    updateUser({ available: !user.available });
+  const toggleAvailability = async () => {
+    const result = await updateUser({ available: !user.available });
+    if (result.error) { toast(result.error, 'error'); return; }
     toast(user.available ? 'You are now marked as Busy' : 'You are now Available');
   };
 
-  const handle = (id, status) => {
-    updateStatus(id, status);
+  const handle = async (id, status) => {
+    const result = await updateStatus(id, status);
+    if (result.error) { toast(result.error, 'error'); return; }
     toast(status === 'accepted' ? 'Booking accepted!' : status === 'completed' ? 'Marked as completed!' : 'Booking declined.');
+    refresh();
   };
+
+  if (loadingBookings && bookings.length === 0) {
+    return <PageLoader />;
+  }
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
@@ -39,7 +70,7 @@ export default function FundiDashboard() {
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} />{user.location}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={13} />{user.phone}</span>
           </p>
-          {user.rating && <div style={{ marginTop: 6 }}><Stars rating={user.rating} count={user.reviews?.length} /></div>}
+          {user.rating && <div style={{ marginTop: 6 }}><Stars rating={user.rating} count={reviews.length} /></div>}
         </div>
         <button onClick={toggleAvailability}
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--gray-200)', background: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'var(--gray-600)' }}>
@@ -50,7 +81,7 @@ export default function FundiDashboard() {
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 28 }}>
-        <StatCard label="Jobs done" value={user.jobsDone || 0} icon={CheckCircle} color="var(--teal)" />
+        <StatCard label="Jobs done" value={user.jobs_done || 0} icon={CheckCircle} color="var(--teal)" />
         <StatCard label="Pending requests" value={pending.length} icon={Clock} color="var(--orange)" />
         <StatCard label="Rating" value={user.rating ? `${user.rating} ★` : '—'} icon={Star} color="#ca8a04" />
         <StatCard label="Rate" value={`KSh ${user.rate}/hr`} icon={DollarSign} color="var(--gray-600)" />
@@ -58,7 +89,7 @@ export default function FundiDashboard() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--gray-100)', padding: 4, borderRadius: 'var(--radius-md)', width: 'fit-content' }}>
-        {[['requests', `Requests (${pending.length})`], ['active', `Active (${accepted.length})`], ['completed', `Completed (${completed.length})`], ['reviews', 'Reviews']].map(([key, label]) => (
+        {[['requests', `Requests (${pending.length})`], ['active', `Active (${accepted.length})`], ['completed', `Completed (${completed.length})`], ['reviews', `Reviews (${reviews.length})`]].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', background: tab === key ? '#fff' : 'transparent', color: tab === key ? 'var(--gray-800)' : 'var(--gray-400)', boxShadow: tab === key ? 'var(--shadow-sm)' : 'none', transition: 'all 0.15s' }}>
             {label}
@@ -66,7 +97,6 @@ export default function FundiDashboard() {
         ))}
       </div>
 
-      {/* Requests */}
       {tab === 'requests' && (
         <div>
           {pending.length === 0 ? <EmptyState icon={Clock} text="No pending requests right now" /> : (
@@ -104,16 +134,16 @@ export default function FundiDashboard() {
 
       {tab === 'reviews' && (
         <div>
-          {(!user.reviews || user.reviews.length === 0) ? <EmptyState icon={Star} text="No reviews yet — they'll appear here after completed jobs" /> : (
+          {reviews.length === 0 ? <EmptyState icon={Star} text="No reviews yet — they'll appear here after completed jobs" /> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {user.reviews.map((r, i) => (
-                <Card key={i} style={{ padding: 18 }}>
+              {reviews.map((r) => (
+                <Card key={r.id} style={{ padding: 18 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <Stars rating={r.rating} />
-                    <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>{new Date(r.date).toLocaleDateString()}</span>
+                    <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   <p style={{ fontSize: 14, color: 'var(--gray-700)', fontStyle: 'italic' }}>"{r.comment}"</p>
-                  <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 6 }}>— {r.reviewerName}</p>
+                  <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 6 }}>— {r.reviewer_name}</p>
                 </Card>
               ))}
             </div>
@@ -131,12 +161,12 @@ function BookingCard({ b, actions = [] }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <p style={{ fontWeight: 700, fontSize: 15 }}>{b.customerName}</p>
+            <p style={{ fontWeight: 700, fontSize: 15 }}>{b.customer_name}</p>
             <Badge color={statusColors[b.status] || 'gray'}>{b.status}</Badge>
           </div>
           <p style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 4 }}>{b.description}</p>
           <p style={{ fontSize: 12, color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span><Phone size={11} style={{ verticalAlign: 'middle' }} /> {b.customerPhone}</span>
+            <span><Phone size={11} style={{ verticalAlign: 'middle' }} /> {b.customer_phone}</span>
             <span><Clock size={11} style={{ verticalAlign: 'middle' }} /> {b.date ? new Date(b.date).toLocaleString() : 'Date TBD'}</span>
           </p>
         </div>
