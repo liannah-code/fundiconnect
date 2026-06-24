@@ -3,36 +3,50 @@ import { Wrench, Zap, Hammer, Droplets, PaintBucket, BrickWall, Star, ArrowRight
 import { Btn } from '../components/UI';
 
 const TRADES = [
-  { icon: Zap,          label: 'Electrician', color: '#fef9c3', iconColor: '#ca8a04' },
-  { icon: Droplets,     label: 'Plumber',     color: '#e0f2fe', iconColor: '#0284c7' },
-  { icon: PaintBucket,  label: 'Painter',     color: '#fce7f3', iconColor: '#db2777' },
-  { icon: Hammer,       label: 'Carpenter',   color: '#fef3ec', iconColor: 'var(--orange)' },
-  { icon: BrickWall,    label: 'Mason',       color: '#f0fdf4', iconColor: '#16a34a' },
-  { icon: Wrench,       label: 'Welder',      color: '#f5f3ff', iconColor: '#7c3aed' },
+  { icon: Zap, label: 'Electrician', color: '#fef9c3', iconColor: '#ca8a04' },
+  { icon: Droplets, label: 'Plumber', color: '#e0f2fe', iconColor: '#0284c7' },
+  { icon: PaintBucket, label: 'Painter', color: '#fce7f3', iconColor: '#db2777' },
+  { icon: Hammer, label: 'Carpenter', color: '#fef3ec', iconColor: 'var(--orange)' },
+  { icon: BrickWall, label: 'Mason', color: '#f0fdf4', iconColor: '#16a34a' },
+  { icon: Wrench, label: 'Welder', color: '#f5f3ff', iconColor: '#7c3aed' },
 ];
 
 const HOW = [
   { num: '01', title: 'Search your trade', desc: 'Browse fundis by trade and neighbourhood across Nairobi.' },
   { num: '02', title: 'View profiles & reviews', desc: 'Check ratings, experience, and hourly rates before you decide.' },
-  { num: '03', title: 'Send a booking request', desc: 'Describe your job, pick a time, and send your request — free.' },
+  { num: '03', title: 'Send a booking request', desc: 'Describe your job, pick a time, and send your request for free.' },
   { num: '04', title: 'Get the job done', desc: 'Your fundi confirms and shows up. Leave a review when done.' },
 ];
 
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1800&q=80';
+
 export default function Home() {
   const navigate = useNavigate();
+
   return (
     <div>
-      <section style={{ background: 'linear-gradient(135deg, #fff8f3 0%, #edfaf3 100%)', padding: '72px 20px 80px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 640, margin: '0 auto' }} className="animate-fadeUp">
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--orange-light)', border: '1px solid var(--orange-mid)', borderRadius: 20, padding: '5px 14px', fontSize: 13, fontWeight: 600, color: 'var(--orange)', marginBottom: 24 }}>
-            <Star size={14} fill="var(--orange)" color="var(--orange)" /> Trusted by thousands of Nairobi households
+      <section style={{
+        position: 'relative',
+        overflow: 'hidden',
+        minHeight: 'calc(100vh - var(--nav-height) - 70px)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '72px 20px 80px',
+        textAlign: 'center',
+        backgroundImage: `linear-gradient(90deg, rgba(44,36,32,0.78), rgba(44,36,32,0.48)), url(${HERO_IMAGE})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }} className="animate-fadeUp">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(255,255,255,0.55)', borderRadius: 20, padding: '5px 14px', fontSize: 13, fontWeight: 600, color: 'var(--orange)', marginBottom: 24 }}>
+            <Star size={14} fill="var(--orange)" color="var(--orange)" /> Trusted by Nairobi households
           </div>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(36px, 6vw, 58px)', lineHeight: 1.15, color: 'var(--gray-800)', marginBottom: 20 }}>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(36px, 6vw, 58px)', lineHeight: 1.15, color: '#fff', marginBottom: 20, textShadow: '0 2px 18px rgba(0,0,0,0.35)' }}>
             Find a trusted fundi<br />
-            <span style={{ color: 'var(--orange)' }}>in your neighbourhood</span>
+            <span style={{ color: '#ffd8bd' }}>in your neighbourhood</span>
           </h1>
-          <p style={{ fontSize: 18, color: 'var(--gray-600)', marginBottom: 36, lineHeight: 1.7 }}>
-            Connect with vetted plumbers, electricians, painters, carpenters and more — all rated and reviewed by your neighbours.
+          <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.9)', marginBottom: 36, lineHeight: 1.7 }}>
+            Connect with vetted plumbers, electricians, painters, carpenters and more, all rated and reviewed by your neighbours.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Btn size="lg" onClick={() => navigate('/browse')}>Find a Fundi <ArrowRight size={16} /></Btn>
@@ -40,8 +54,8 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 36, flexWrap: 'wrap' }}>
             {['200+ verified fundis', 'All Nairobi areas', 'Free to use'].map(t => (
-              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--gray-600)', fontWeight: 500 }}>
-                <CheckCircle size={15} color="var(--teal)" />{t}
+              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.88)', fontWeight: 600 }}>
+                <CheckCircle size={15} color="#86efac" />{t}
               </span>
             ))}
           </div>
@@ -69,7 +83,7 @@ export default function Home() {
       <section style={{ background: 'var(--gray-50)', padding: '64px 20px', borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, textAlign: 'center', marginBottom: 8 }}>How it works</h2>
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', marginBottom: 48 }}>Getting help is as simple as 1-2-3-4.</p>
+          <p style={{ textAlign: 'center', color: 'var(--gray-400)', marginBottom: 48 }}>Getting help is simple and transparent.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24 }} className="stagger">
             {HOW.map(({ num, title, desc }) => (
               <div key={num} className="animate-fadeUp" style={{ background: '#fff', borderRadius: 'var(--radius-lg)', padding: 24, border: '1px solid var(--gray-200)', boxShadow: 'var(--shadow-sm)' }}>

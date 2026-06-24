@@ -51,7 +51,7 @@ export default function Register() {
       <div style={{ minHeight: 'calc(100vh - var(--nav-height))', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'linear-gradient(135deg, #fff8f3 0%, #edfaf3 100%)' }}>
         <div className="animate-fadeUp" style={{ width: '100%', maxWidth: 480 }}>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 34, textAlign: 'center', marginBottom: 8 }}>Create your account</h1>
-          <p style={{ textAlign: 'center', color: 'var(--gray-600)', marginBottom: 36 }}>Join FundiConnect — what brings you here?</p>
+          <p style={{ textAlign: 'center', color: 'var(--gray-600)', marginBottom: 36 }}>Join FundiConnect - what brings you here?</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
             <RoleCard icon={User} title="I need a fundi" desc="Find and book trusted local tradespeople" selected={role === 'customer'} onClick={() => setRole('customer')} />
             <RoleCard icon={Wrench} title="I am a fundi" desc="List my services and get clients" selected={role === 'fundi'} onClick={() => setRole('fundi')} />

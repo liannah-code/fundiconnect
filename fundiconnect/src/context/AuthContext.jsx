@@ -2,6 +2,19 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
+const ADMIN_EMAIL = 'thogorikiburu24@gmail.com';
+
+function withAdminRole(profile, authUser) {
+  const email = authUser?.email || profile?.email || '';
+  if (email.toLowerCase() !== ADMIN_EMAIL) return { ...profile, email };
+  return {
+    id: authUser?.id || profile?.id || ADMIN_EMAIL,
+    name: profile?.name || 'Admin',
+    ...profile,
+    email,
+    role: 'admin',
+  };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);   // combined auth + profile data
@@ -22,11 +35,11 @@ export function AuthProvider({ children }) {
       return;
     }
     if (!data) {
-      // Auth account exists but profile row hasn't been created yet
-      setUser({ id: authUser.id, email: authUser.email, _noProfile: true });
+      // Auth account exists but profile row hasn't been created yet.
+      setUser(withAdminRole({ id: authUser.id, _noProfile: true }, authUser));
       return;
     }
-    setUser({ ...data, email: authUser.email });
+    setUser(withAdminRole(data, authUser));
   }, []);
 
   useEffect(() => {
@@ -37,7 +50,7 @@ export function AuthProvider({ children }) {
 
     // listen for login/logout/token refresh/password recovery
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      loadProfile(session?.user ?? null);
+      loadProfile(session?.user ?? null).finally(() => setLoading(false));
     });
 
     return () => listener.subscription.unsubscribe();
@@ -71,7 +84,7 @@ export function AuthProvider({ children }) {
     const { error: profileError } = await supabase.from('profiles').insert(profileRow);
     if (profileError) return { error: profileError.message };
 
-    const newUser = { ...profileRow, email };
+    const newUser = withAdminRole(profileRow, data.user);
     setUser(newUser);
     return { user: newUser };
   }, []);
@@ -82,7 +95,7 @@ export function AuthProvider({ children }) {
     await loadProfile(data.user);
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
-    return { user: { ...profile, email: data.user.email } };
+    return { user: withAdminRole(profile || { id: data.user.id, _noProfile: true }, data.user) };
   }, [loadProfile]);
 
   const logout = useCallback(async () => {
@@ -104,7 +117,8 @@ export function AuthProvider({ children }) {
    * redirects to /reset-password on this site with a recovery token in the URL.
    */
   const resetPassword = useCallback(async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const cleanEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) return { error: error.message };
@@ -113,7 +127,7 @@ export function AuthProvider({ children }) {
 
   /**
    * Set a new password. Must be called while the user has an active
-   * "recovery" session — i.e. after clicking the link from resetPassword().
+   * "recovery" session after clicking the link from resetPassword().
    */
   const updatePassword = useCallback(async (newPassword) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });

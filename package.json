@@ -10,8 +10,9 @@
     "lucide-react": "^0.383.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
+    "start": "npm --prefix fundiconnect run dev",
+    "dev": "npm --prefix fundiconnect run dev",
+    "build": "npm --prefix fundiconnect run build"
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],

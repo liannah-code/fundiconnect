@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useBookings } from '../context/BookingsContext';
 import { Card, Badge, Avatar, Btn, Textarea, toast, PageLoader } from '../components/UI';
@@ -13,11 +14,12 @@ export default function MyBookings() {
   const [reviewTarget, setReviewTarget] = useState(null);
 
   const refresh = useCallback(async () => {
+    if (!user?.id) return;
     setLoading(true);
     const data = await forCustomer(user.id);
     setBookings(data);
     setLoading(false);
-  }, [forCustomer, user.id]);
+  }, [forCustomer, user?.id]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -27,8 +29,8 @@ export default function MyBookings() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, marginBottom: 6 }}>My Bookings</h1>
-      <p style={{ color: 'var(--gray-400)', marginBottom: 24 }}>{bookings.length} booking{bookings.length !== 1 ? 's' : ''} total</p>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, marginBottom: 6 }}>Client Dashboard</h1>
+      <p style={{ color: 'var(--gray-400)', marginBottom: 24 }}>{bookings.length} booking{bookings.length !== 1 ? 's' : ''} sent to fundis</p>
 
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--gray-100)', padding: 4, borderRadius: 'var(--radius-md)', width: 'fit-content' }}>
         {[['all','All'],['pending','Pending'],['accepted','Accepted'],['completed','Completed']].map(([key,label]) => (
@@ -42,7 +44,10 @@ export default function MyBookings() {
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--gray-400)' }}>
           <Clock size={36} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
-          <p>No bookings here yet.</p>
+          <p style={{ marginBottom: 16 }}>No bookings here yet. Find a fundi to send your first request.</p>
+          <Link to="/browse" style={{ display: 'inline-flex', padding: '10px 18px', borderRadius: 'var(--radius-md)', background: 'var(--orange)', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+            Find a Fundi
+          </Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -52,10 +57,10 @@ export default function MyBookings() {
             return (
               <Card key={b.id} style={{ padding: 20 }}>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                  <Avatar name={b.fundi_name} size={44} />
+                  <Avatar name={b.fundi_name || 'Fundi'} size={44} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                      <p style={{ fontWeight: 700, fontSize: 15 }}>{b.fundi_name}</p>
+                      <p style={{ fontWeight: 700, fontSize: 15 }}>{b.fundi_name || 'Fundi request'}</p>
                       <Badge color={statusColors[b.status] || 'gray'}>{b.status}</Badge>
                     </div>
                     <p style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 4 }}>{b.description}</p>
@@ -89,7 +94,7 @@ export default function MyBookings() {
         <ReviewModal booking={reviewTarget} onClose={() => setReviewTarget(null)} onSubmit={async (rating, comment) => {
           const result = await addReview({ bookingId: reviewTarget.id, fundiId: reviewTarget.fundi_id, rating, comment, reviewerName: user.name });
           if (result.error) { toast(result.error, 'error'); return; }
-          toast('Review submitted — thank you!');
+          toast('Review submitted. Thank you!');
           setReviewTarget(null);
           refresh();
         }} />

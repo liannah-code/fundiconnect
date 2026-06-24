@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 import FundiDashboard from './pages/FundiDashboard';
 import MyBookings from './pages/MyBookings';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -31,6 +32,9 @@ export default function App() {
                 } />
                 <Route path="/my-bookings" element={
                   <ProtectedRoute role="customer"><MyBookings /></ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
                 } />
               </Routes>
             </div>

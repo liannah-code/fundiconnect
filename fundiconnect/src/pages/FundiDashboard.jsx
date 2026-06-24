@@ -14,15 +14,17 @@ export default function FundiDashboard() {
   const [reviews, setReviews] = useState([]);
 
   const refresh = useCallback(async () => {
+    if (!user?.id) return;
     setLoadingBookings(true);
     const data = await forFundi(user.id);
     setBookings(data);
     setLoadingBookings(false);
-  }, [forFundi, user.id]);
+  }, [forFundi, user?.id]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
   useEffect(() => {
+    if (!user?.id) return;
     supabase
       .from('reviews')
       .select('*')
@@ -32,7 +34,7 @@ export default function FundiDashboard() {
         if (error) { console.error('Error fetching reviews:', error.message); return; }
         setReviews(data || []);
       });
-  }, [user.id]);
+  }, [user?.id]);
 
   const pending   = bookings.filter(b => b.status === 'pending');
   const accepted  = bookings.filter(b => b.status === 'accepted');
@@ -59,16 +61,16 @@ export default function FundiDashboard() {
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
       {/* Profile header */}
       <Card style={{ padding: '24px', marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Avatar name={user.name} size={64} />
+        <Avatar name={user.name || user.email || 'Fundi'} size={64} />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26 }}>{user.name}</h1>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26 }}>{user.name || 'Fundi dashboard'}</h1>
             <Badge color={user.available ? 'teal' : 'amber'}>{user.available ? 'Available' : 'Busy'}</Badge>
           </div>
           <p style={{ fontSize: 14, color: 'var(--gray-600)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Briefcase size={13} />{user.trade}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} />{user.location}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={13} />{user.phone}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Briefcase size={13} />{user.trade || 'Trade not set'}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} />{user.location || 'Area not set'}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={13} />{user.phone || 'Phone not set'}</span>
           </p>
           {user.rating && <div style={{ marginTop: 6 }}><Stars rating={user.rating} count={reviews.length} /></div>}
         </div>
@@ -83,8 +85,8 @@ export default function FundiDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 28 }}>
         <StatCard label="Jobs done" value={user.jobs_done || 0} icon={CheckCircle} color="var(--teal)" />
         <StatCard label="Pending requests" value={pending.length} icon={Clock} color="var(--orange)" />
-        <StatCard label="Rating" value={user.rating ? `${user.rating} ★` : '—'} icon={Star} color="#ca8a04" />
-        <StatCard label="Rate" value={`KSh ${user.rate}/hr`} icon={DollarSign} color="var(--gray-600)" />
+        <StatCard label="Rating" value={user.rating ? `${user.rating} stars` : 'New'} icon={Star} color="#ca8a04" />
+        <StatCard label="Rate" value={user.rate ? `KSh ${user.rate}/hr` : 'Not set'} icon={DollarSign} color="var(--gray-600)" />
       </div>
 
       {/* Tabs */}
@@ -134,7 +136,7 @@ export default function FundiDashboard() {
 
       {tab === 'reviews' && (
         <div>
-          {reviews.length === 0 ? <EmptyState icon={Star} text="No reviews yet — they'll appear here after completed jobs" /> : (
+          {reviews.length === 0 ? <EmptyState icon={Star} text="No reviews yet. They will appear here after completed jobs." /> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {reviews.map((r) => (
                 <Card key={r.id} style={{ padding: 18 }}>
@@ -143,7 +145,7 @@ export default function FundiDashboard() {
                     <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   <p style={{ fontSize: 14, color: 'var(--gray-700)', fontStyle: 'italic' }}>"{r.comment}"</p>
-                  <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 6 }}>— {r.reviewer_name}</p>
+                  <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 6 }}>From {r.reviewer_name || 'Customer'}</p>
                 </Card>
               ))}
             </div>
@@ -161,12 +163,12 @@ function BookingCard({ b, actions = [] }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <p style={{ fontWeight: 700, fontSize: 15 }}>{b.customer_name}</p>
+            <p style={{ fontWeight: 700, fontSize: 15 }}>{b.customer_name || 'Client request'}</p>
             <Badge color={statusColors[b.status] || 'gray'}>{b.status}</Badge>
           </div>
           <p style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 4 }}>{b.description}</p>
           <p style={{ fontSize: 12, color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span><Phone size={11} style={{ verticalAlign: 'middle' }} /> {b.customer_phone}</span>
+            <span><Phone size={11} style={{ verticalAlign: 'middle' }} /> {b.customer_phone || 'No phone provided'}</span>
             <span><Clock size={11} style={{ verticalAlign: 'middle' }} /> {b.date ? new Date(b.date).toLocaleString() : 'Date TBD'}</span>
           </p>
         </div>

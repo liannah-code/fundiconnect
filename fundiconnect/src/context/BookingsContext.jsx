@@ -70,7 +70,7 @@ export function BookingsProvider({ children }) {
       .eq('fundi_id', fundiId)
       .order('created_at', { ascending: false });
     if (error) { console.error(error.message); return []; }
-    const mapped = data.map(b => ({ ...b, review: b.reviews?.[0] || null }));
+    const mapped = (data || []).map(b => ({ ...b, review: b.reviews?.[0] || null }));
     setBookings(prev => {
       const others = prev.filter(p => p.fundi_id !== fundiId);
       return [...mapped, ...others];
@@ -86,7 +86,7 @@ export function BookingsProvider({ children }) {
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
     if (error) { console.error(error.message); return []; }
-    const mapped = data.map(b => ({ ...b, review: b.reviews?.[0] || null }));
+    const mapped = (data || []).map(b => ({ ...b, review: b.reviews?.[0] || null }));
     setBookings(prev => {
       const others = prev.filter(p => p.customer_id !== customerId);
       return [...mapped, ...others];

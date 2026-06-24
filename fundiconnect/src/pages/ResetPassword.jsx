@@ -14,13 +14,23 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase puts the user into a temporary "recovery" session when they
-    // land here via the emailed link. Confirm that session exists before
-    // allowing the form to submit.
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let active = true;
+
+    async function prepareRecoverySession() {
+      const query = new URLSearchParams(window.location.search);
+      const code = query.get('code');
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active) return;
       if (session) setReady(true);
       else setError('This password reset link is invalid or has expired. Please request a new one.');
-    });
+    }
+
+    prepareRecoverySession();
+    return () => { active = false; };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -34,6 +44,7 @@ export default function ResetPassword() {
     setLoading(false);
     if (result.error) { setError(result.error); return; }
     toast('Password updated! Please log in again.');
+    await supabase.auth.signOut();
     navigate('/login');
   };
 

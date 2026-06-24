@@ -44,9 +44,14 @@ export default function Navbar() {
 
           {user && (
             <>
-              <NavLink to="/browse" active={isActive('/browse')}>Find a Fundi</NavLink>
+              {user.role === 'admin' && <NavLink to="/admin" active={isActive('/admin')}>Admin</NavLink>}
               {user.role === 'fundi' && <NavLink to="/dashboard" active={isActive('/dashboard')}>My Dashboard</NavLink>}
-              {user.role === 'customer' && <NavLink to="/my-bookings" active={isActive('/my-bookings')}>My Bookings</NavLink>}
+              {user.role === 'customer' && (
+                <>
+                  <NavLink to="/browse" active={isActive('/browse')}>Find a Fundi</NavLink>
+                  <NavLink to="/my-bookings" active={isActive('/my-bookings')}>My Bookings</NavLink>
+                </>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 8, paddingLeft: 12, borderLeft: '1px solid var(--gray-200)' }}>
                 <Avatar name={user.name || user.email || '?'} size={32} />
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--gray-800)' }}>{(user.name || user.email || '').split(' ')[0]}</span>
