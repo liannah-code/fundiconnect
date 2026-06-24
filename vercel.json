@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm --prefix fundiconnect ci && npm --prefix fundiconnect run build",
+  "outputDirectory": "fundiconnect/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
